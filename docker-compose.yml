@@ -1,7 +1,6 @@
 version: '3.8'
-
 services:
-  # Service pour l'application Laravel
+  # Service pour l'application Laravel avec PHP-FPM
   app:
     build:
       context: .
@@ -16,6 +15,21 @@ services:
     depends_on:
       - db
 
+  # Service Nginx pour servir l'application
+  nginx:
+    image: nginx:latest
+    container_name: laravel_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"  # Sur Play with Docker, utilisez le port 80
+    volumes:
+      - ./:/var/www/html
+      - ./nginx/conf.d:/etc/nginx/conf.d
+    networks:
+      - laravel_network
+    depends_on:
+      - app
+
   # Service pour la base de données MySQL
   db:
     image: mysql:8
@@ -29,10 +43,13 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - ./db-data:/var/lib/mysql
+      - db-data:/var/lib/mysql  # Utilisation d'un volume nommé pour plus de stabilité
     networks:
       - laravel_network
 
 networks:
   laravel_network:
     driver: bridge
+
+volumes:
+  db-data:  # Définition du volume nommé
